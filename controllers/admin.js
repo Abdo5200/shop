@@ -74,7 +74,7 @@ exports.postAddProduct = async (req, res, next) => {
         validationErrors: [],
       });
     }
-    const imageUrl = image.path;
+    const imageUrl = image.location;
     //create a new product object from Product Schema
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -181,8 +181,8 @@ exports.postEditProduct = async (req, res, next) => {
     product.price = updatedPrice;
     product.description = updatedDescription;
     if (updatedImage) {
-      fileHelper.deleteFile(product.imageUrl);
-      product.imageUrl = updatedImage.path;
+      await fileHelper.deleteFile(product.imageUrl);
+      product.imageUrl = updatedImage.location;
     }
     product.save();
     res.redirect("/admin/products");
@@ -201,7 +201,7 @@ exports.deleteProduct = async (req, res, next) => {
   try {
     const product = await Product.findById(prodId);
     if (!product) errorCall(new Error("Product does not exist"), next);
-    fileHelper.deleteFile(product.imageUrl);
+    await fileHelper.deleteFile(product.imageUrl);
     await Product.deleteOne({
       _id: prodId,
       userId: req.user._id,

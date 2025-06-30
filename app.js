@@ -16,6 +16,8 @@ const csrf = require("csurf");
 
 const compression = require("compression");
 
+const { S3Client } = require("@aws-sdk/client-s3");
+
 require("dotenv").config();
 
 const errorController = require("./controllers/error");
@@ -35,6 +37,8 @@ const flash = require("connect-flash");
 const User = require("./models/user");
 
 const multer = require("multer");
+
+const multerS3 = require("multer-s3");
 
 const bcrypt = require("bcryptjs");
 
@@ -59,28 +63,67 @@ const accessLogStream = fs.createWriteStream(
   { flags: "a" }
 );
 
-const fileStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "images");
-  },
-  filename: async (req, file, cb) => {
-    const date = new Date().toISOString();
-    const hashedDate = (await bcrypt.hash(date, 10)).replace(/[\/\\$]/g, "-");
-    cb(null, hashedDate + "-" + file.originalname);
+// const fileStorage = multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     cb(null, "images");
+//   },
+//   filename: async (req, file, cb) => {
+//     const date = new Date().toISOString();
+//     const hashedDate = (await bcrypt.hash(date, 10)).replace(/[\/\\$]/g, "-");
+//     cb(null, hashedDate + "-" + file.originalname);
+//   },
+// });
+
+// const fileFilter = (req, file, cb) => {
+//   if (
+//     file.mimetype === "image/png" ||
+//     file.mimetype === "image/jpg" ||
+//     file.mimetype === "image/jpeg"
+//   )
+//     cb(null, true);
+//   else cb(null, false);
+// };
+
+const fileFilter = (req, file, cb) => {
+  const allowed = ["image/png", "image/jpg", "image/jpeg"];
+  cb(null, allowed.includes(file.mimetype));
+};
+
+const s3 = new S3Client({
+  region: process.env.AWS_BUCKET_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_SECRET_KEY,
   },
 });
 
-const fileFilter = (req, file, cb) => {
-  if (
-    file.mimetype === "image/png" ||
-    file.mimetype === "image/jpg" ||
-    file.mimetype === "image/jpeg"
-  )
-    cb(null, true);
-  else cb(null, false);
-};
+const storage = multerS3({
+  s3,
+  bucket: process.env.AWS_BUCKET_NAME,
+  contentType: multerS3.AUTO_CONTENT_TYPE,
+  metadata: (req, file, cb) => {
+    cb(null, { fieldName: file.fieldname });
+  },
+  key: async (req, file, cb) => {
+    const date = new Date().toISOString();
+    const hash = (await bcrypt.hash(date, 10)).replace(/[\/\\$]/g, "-");
+    const filename = `${hash}-${file.originalname}`;
+    cb(null, filename);
+  },
+});
 
-app.use(helmet());
+app.use(
+  helmet.contentSecurityPolicy({
+    useDefaults: true,
+    directives: {
+      "img-src": [
+        "'self'",
+        "data:",
+        "https://abdo5200-product-images.s3.eu-north-1.amazonaws.com",
+      ],
+    },
+  })
+);
 
 app.use(compression());
 
@@ -88,9 +131,11 @@ app.use(morgan("combined", { stream: accessLogStream }));
 
 app.use(bodyParser.urlencoded({ extended: false }));
 
-app.use(
-  multer({ storage: fileStorage, fileFilter: fileFilter }).single("image")
-);
+// app.use(
+//   multer({ storage: fileStorage, fileFilter: fileFilter }).single("image")
+// );
+
+app.use(multer({ storage: storage, fileFilter: fileFilter }).single("image"));
 
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/images", express.static(path.join(__dirname, "images")));
@@ -137,10 +182,11 @@ app.use("/500", errorController.get500);
 app.use(errorController.get404);
 
 app.use((error, req, res, next) => {
+  console.log("Uncaught err: ", error);
   res.status(500).render("500", {
     pageTitle: "Error!",
     path: "/500",
-    isAuthenticated: req.session.isLoggedIn,
+    isAuthenticated: req.session?.isLoggedIn || false,
   });
 });
 
