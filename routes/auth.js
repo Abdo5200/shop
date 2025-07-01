@@ -13,7 +13,10 @@ router.post(
   "/login",
   [
     check("email")
-      .normalizeEmail()
+      .normalizeEmail({
+        gmail_remove_dots: false,
+        gmail_remove_subaddress: false,
+      })
       .isEmail()
       .withMessage("please enter a valid email address")
       .custom(async (value, { req }) => {
@@ -54,7 +57,10 @@ router.post(
   [
     //when using `check` it searches for it in header or body of the request
     check("email")
-      .normalizeEmail()
+      .normalizeEmail({
+        gmail_remove_dots: false,
+        gmail_remove_subaddress: false,
+      })
       .isEmail()
       .withMessage("Please Enter a valid Email")
       .custom(async (value, { req }) => {
