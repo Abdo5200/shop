@@ -1,0 +1,54 @@
+app = "shop-node-js"
+primary_region = "fra"
+console_command = "/bin/bash"
+
+[build]
+  builder = "nixpacks"
+ 
+
+[build.args]
+    NODE_VERSION = "20.15.1"
+    NPM_INSTALL_COMMAND = "npm install"
+
+[processes]
+  app = "node app.js"
+
+[env]
+  PORT = "8080"
+  NODE_ENV = "production"
+  SESSION_SECRET = "amdryazencpuisbetter"
+  MY_SENDING_EMAIL = "abdelrahman.mamdouh2200@gmail.com"
+  MONGO_USER = "abdelrahman_mamdouh"
+  MONGO_PASSWORD = "AmdRyzen32200g"
+  AWS_BUCKET_NAME = "abdo5200-product-images"
+  MONGO_DEFAULT_DATABASE = "shop"
+  AWS_BUCKET_REGION = "eu-north-1"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 8080
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http","tls]
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [[services.tcp_checks]]
+    interval = "15s"
+    timeout = "2s"
+    grace_period = "5s"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256
