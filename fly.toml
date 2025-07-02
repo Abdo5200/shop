@@ -37,7 +37,7 @@ console_command = "/bin/bash"
 
   [[services.ports]]
     port = 80
-    handlers = ["http","tls]
+    handlers = ["http","tls"]
 
   [[services.ports]]
     port = 443
