@@ -6,15 +6,45 @@
   <%- include('../includes/navigation.ejs') %>
   <main>
     <% if (orders.length <= 0) { %>
-    <h1>Nothing there!</h1>
+    <div class="orders-empty">
+      <h1>No Orders Yet</h1>
+      <p>You haven't placed any orders yet. Start shopping to see your order history here!</p>
+      <a href="/products" class="btn">Start Shopping</a>
+    </div>
     <% } else { %>
     <ul class="orders">
       <% orders.forEach((order,index) => { %>
       <li class="orders__item">
-        <h1>Order - #<%= index+1 %> - <a href="/orders/<%= order._id %>">Invoice</a></h1>
+        <div class="order-meta">
+          <span class="order-number">Order #<%= index+1 %></span>
+          <span>•</span>
+          <span>Placed on 
+            <% 
+              let orderDate = 'Recently';
+              if (order.createdAt) {
+                try {
+                  const date = new Date(order.createdAt);
+                  if (!isNaN(date.getTime())) {
+                    orderDate = date.toLocaleDateString();
+                  }
+                } catch (e) {
+                  orderDate = 'Recently';
+                }
+              }
+            %>
+            <%= orderDate %>
+          </span>
+        </div>
+        <h1>
+          <span>Order Details</span>
+          <a href="/orders/<%= order._id %>">View Invoice</a>
+        </h1>
         <ul class="orders__products">
           <% order.products.forEach(p => { %>
-          <li class="orders__products-item"><%= p.product.title %> (<%= p.quantity %>)</li>
+          <li class="orders__products-item">
+            <%= p.product.title %> 
+            <span style="color: #00695c; font-weight: 600;">× <%= p.quantity %></span>
+          </li>
           <% }); %>
         </ul>
       </li>
