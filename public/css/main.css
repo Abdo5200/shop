@@ -10,6 +10,10 @@ body {
   overflow-x: hidden;
   -webkit-text-size-adjust: 100%;
   -ms-text-size-adjust: 100%;
+  /* Enable smooth scrolling */
+  scroll-behavior: smooth;
+  /* Ensure touch scrolling works */
+  -webkit-overflow-scrolling: touch;
 }
 
 body {
@@ -24,6 +28,9 @@ main {
   padding: 1rem;
   margin: auto;
   max-width: 1200px;
+  /* Ensure proper scrolling */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 form {
@@ -225,6 +232,8 @@ form {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1rem;
   padding: 0.5rem;
+  /* Ensure grid doesn't interfere with scrolling */
+  touch-action: pan-y;
 }
 
 .card {
@@ -232,6 +241,14 @@ form {
   border-radius: 8px;
   overflow: hidden;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  /* Ensure cards don't interfere with touch scrolling */
+  touch-action: pan-y;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 .card:hover {
@@ -340,6 +357,9 @@ form {
 @media (max-width: 767px) {
   main {
     padding: 0.5rem;
+    /* Enhanced mobile scrolling */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
   }
 
   .main-header {
