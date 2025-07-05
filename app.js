@@ -121,6 +121,22 @@ app.use(
         "data:",
         "https://abdo5200-product-images.s3.eu-north-1.amazonaws.com",
       ],
+      "script-src": [
+        "'self'",
+        "https://js.stripe.com",
+        "'unsafe-inline'", // Required for Stripe's inline scripts
+      ],
+      "connect-src": [
+        "'self'",
+        "https://api.stripe.com",
+        "https://checkout.stripe.com",
+      ],
+      "frame-src": [
+        "'self'",
+        "https://checkout.stripe.com",
+        "https://js.stripe.com",
+      ],
+      "form-action": ["'self'", "https://checkout.stripe.com"],
     },
   })
 );
