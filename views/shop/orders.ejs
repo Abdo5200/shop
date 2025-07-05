@@ -25,7 +25,11 @@
                 try {
                   const date = new Date(order.createdAt);
                   if (!isNaN(date.getTime())) {
-                    orderDate = date.toLocaleDateString();
+                    orderDate = date.toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    });
                   }
                 } catch (e) {
                   orderDate = 'Recently';
