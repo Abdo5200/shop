@@ -20,8 +20,24 @@
         <input class="<%= validationErrors.find(e=> e.path === "imageUrl") ? 'invalid':'' %>" type="text" name="imageUrl" id="imageUrl" value="<% if (editing||hasError) { %><%= product.imageUrl %><% } %>">
       </div> -->
       <div class="form-control">
-        <label for="image">Image URL</label>
-        <input type="file" name="image" id="image">
+        <label for="image">Product Image</label>
+        <div class="file-input-wrapper">
+          <input type="file" name="image" id="image" accept="image/*" onchange="previewImage(this)">
+          <label for="image" class="file-input-label">
+            <svg viewBox="0 0 24 24">
+              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+              <path d="M14 14h-4v-4h4v4zm-2-2v-2h-2v2h2z"/>
+            </svg>
+            <div>
+              <div class="file-text">Choose an image file</div>
+              <div class="file-hint">Click to browse or drag & drop</div>
+            </div>
+          </label>
+        </div>
+        <div class="file-preview" id="filePreview">
+          <img id="imagePreview" src="" alt="Preview">
+          <div class="file-info" id="fileInfo"></div>
+        </div>
       </div>
       <div class="form-control">
         <label for="price">Price</label>
@@ -39,3 +55,78 @@
     </form>
   </main>
   <%- include('../includes/end.ejs') %>
+  
+  <script>
+    function previewImage(input) {
+      const preview = document.getElementById('filePreview');
+      const imagePreview = document.getElementById('imagePreview');
+      const fileInfo = document.getElementById('fileInfo');
+      
+      if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+          imagePreview.src = e.target.result;
+          preview.classList.add('show');
+          
+          // Display file info
+          const fileSize = (file.size / 1024 / 1024).toFixed(2);
+          fileInfo.innerHTML = `
+            <strong>File:</strong> ${file.name}<br>
+            <strong>Size:</strong> ${fileSize} MB<br>
+            <strong>Type:</strong> ${file.type}
+          `;
+        };
+        
+        reader.readAsDataURL(file);
+      } else {
+        preview.classList.remove('show');
+      }
+    }
+    
+    // Add drag and drop functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const fileInput = document.getElementById('image');
+      const fileLabel = document.querySelector('.file-input-label');
+      
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        fileLabel.addEventListener(eventName, preventDefaults, false);
+      });
+      
+      function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      
+      ['dragenter', 'dragover'].forEach(eventName => {
+        fileLabel.addEventListener(eventName, highlight, false);
+      });
+      
+      ['dragleave', 'drop'].forEach(eventName => {
+        fileLabel.addEventListener(eventName, unhighlight, false);
+      });
+      
+      function highlight(e) {
+        fileLabel.style.background = 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)';
+        fileLabel.style.borderColor = '#764ba2';
+      }
+      
+      function unhighlight(e) {
+        fileLabel.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        fileLabel.style.borderColor = '#667eea';
+      }
+      
+      fileLabel.addEventListener('drop', handleDrop, false);
+      
+      function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length > 0) {
+          fileInput.files = files;
+          previewImage(fileInput);
+        }
+      }
+    });
+  </script>
