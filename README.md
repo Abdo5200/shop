@@ -236,31 +236,16 @@ Add CORS settings to your S3 bucket:
 
 ## 🚀 Deployment
 
-### **Deploy to Fly.io**
-
-The project includes a `fly.toml` configuration file for easy deployment to Fly.io:
-
-```bash
-# Install Fly CLI
-curl -L https://fly.io/install.sh | sh
-
-# Login to Fly
-fly auth login
-
-# Deploy the application
-fly deploy
-```
-
 ### **Environment Variables for Production**
 
 Set these environment variables in your production environment:
 
 ```bash
-fly secrets set MONGO_USER=your_username
-fly secrets set MONGO_PASSWORD=your_password
-fly secrets set SESSION_SECRET=your_secret
-fly secrets set AWS_ACCESS_KEY=your_key
-fly secrets set AWS_SECRET_KEY=your_secret
+MONGO_USER=your_username
+MONGO_PASSWORD=your_password
+SESSION_SECRET=your_secret
+AWS_ACCESS_KEY=your_key
+AWS_SECRET_KEY=your_secret
 ```
 
 ## 🧪 Testing
