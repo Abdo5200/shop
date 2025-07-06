@@ -548,3 +548,47 @@ form {
 .form-control textarea.invalid {
   border-color: red;
 }
+
+.card__actions a.btn,
+.card__actions button.btn {
+  /* Remove flex, width, min-width, max-width */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  -ms-appearance: none;
+  border: 1px solid #00695c;
+  background: white;
+  color: #00695c;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0.75rem 1.5rem; /* Adjust horizontal padding for button width */
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  line-height: 1.2;
+  height: 48px;
+  vertical-align: middle;
+  text-decoration: none;
+  outline: none;
+  box-shadow: none;
+  margin: 0;
+  background-clip: padding-box;
+  font-family: inherit;
+}
+
+.card__actions button.btn {
+  border: 1px solid #00695c;
+  background: white;
+  color: #00695c;
+}
+
+.card__actions .btn:hover,
+.card__actions .btn:active {
+  background-color: #00695c;
+  color: white;
+}

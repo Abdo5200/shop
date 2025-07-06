@@ -64,6 +64,12 @@
       
       if (input.files && input.files[0]) {
         const file = input.files[0];
+        if (!file.type.startsWith('image/')) {
+          fileInfo.innerHTML = 'Please select a valid image file.';
+          imagePreview.src = '';
+          preview.classList.add('show');
+          return;
+        }
         const reader = new FileReader();
         
         reader.onload = function(e) {
@@ -82,6 +88,8 @@
         reader.readAsDataURL(file);
       } else {
         preview.classList.remove('show');
+        imagePreview.src = '';
+        fileInfo.innerHTML = '';
       }
     }
     
@@ -89,6 +97,13 @@
     document.addEventListener('DOMContentLoaded', function() {
       const fileInput = document.getElementById('image');
       const fileLabel = document.querySelector('.file-input-label');
+      
+      // Ensure previewImage is always called on file selection
+      if (fileInput) {
+        fileInput.addEventListener('change', function() {
+          previewImage(this);
+        });
+      }
       
       ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
         fileLabel.addEventListener(eventName, preventDefaults, false);
@@ -108,13 +123,13 @@
       });
       
       function highlight(e) {
-        fileLabel.style.background = 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)';
-        fileLabel.style.borderColor = '#764ba2';
+        fileLabel.style.background = '#00897b';
+        fileLabel.style.borderColor = '#00897b';
       }
       
       function unhighlight(e) {
-        fileLabel.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-        fileLabel.style.borderColor = '#667eea';
+        fileLabel.style.background = '#00695c';
+        fileLabel.style.borderColor = '#00695c';
       }
       
       fileLabel.addEventListener('drop', handleDrop, false);
