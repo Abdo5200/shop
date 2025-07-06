@@ -1,11 +1,11 @@
 const mongodb = require("mongodb");
 const MongoClient = mongodb.MongoClient;
 let _db;
+require("dotenv").config();
 const mongoConnection = async (callback) => {
   try {
-    const client = await MongoClient.connect(
-      "mongodb+srv://abdelrahman_mamdouh:AmdRyzen32200g@cluster0.henws.mongodb.net/node-course?retryWrites=true&w=majority&appName=Cluster0"
-    );
+    const MONGODB_URI = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@cluster0.henws.mongodb.net/node-course?retryWrites=true&w=majority&appName=Cluster0`;
+    const client = await MongoClient.connect(MONGODB_URI);
     console.log("connected");
     _db = await client.db();
     callback();
