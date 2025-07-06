@@ -12,9 +12,7 @@ require("dotenv").config();
 
 const path = require("path");
 
-
 const stripe = require("stripe")(process.env.STRIPE_KEY);
-
 
 const ITEMS_PER_PAGE = 2;
 
@@ -58,19 +56,6 @@ let renderProds = async (req, res, link, path, title) => {
 exports.getIndex = async (req, res, next) => {
   try {
     renderProds(req, res, "shop/index", "/", "Shop");
-  } catch (err) {
-    errorCall(err, next);
-  }
-};
-
-/**
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- */
-
-exports.getProducts = async (req, res, next) => {
-  try {
-    renderProds(req, res, "shop/product-list", "/products", "All Products");
   } catch (err) {
     errorCall(err, next);
   }
