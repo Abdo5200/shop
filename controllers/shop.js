@@ -262,61 +262,206 @@ exports.getOrders = async (req, res, next) => {
 exports.getInvoice = async (req, res, next) => {
   try {
     const orderId = req.params.orderId;
-    const order = await Order.findById(orderId);
+    const order = await Order.findById(orderId).populate("user");
     if (!order) return errorCall(new Error("No Order found"), next);
 
     if (order.user.userId.toString() !== req.user._id.toString())
       return errorCall(new Error("Unauthorized Access!"), next);
 
     const invoiceName = "invoice-" + orderId + ".pdf";
-
     const invoicePath = path.join("data", "invoices", invoiceName);
 
-    let totalPrice = 0;
+    // Set response headers
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      'inline; filename = "' + invoiceName + '"'
+    );
 
-    const pdfDoc = new PDFDocument();
+    const pdfDoc = new PDFDocument({
+      size: "A4",
+      margin: 50,
+    });
 
+    // Pipe to file and response
     pdfDoc.pipe(fs.createWriteStream(invoicePath));
-
     pdfDoc.pipe(res);
 
-    pdfDoc.fontSize(26).text("Invoice", {
-      underline: true,
-      align: "center",
-    });
-    pdfDoc.text("------------------------------------------------------");
+    // Calculate totals
+    let subtotal = 0;
+    let tax = 0;
+    let totalPrice = 0;
+
     order.products.forEach((prod) => {
       const productTotalPrice = prod.product.price * prod.quantity;
-      totalPrice += productTotalPrice;
+      subtotal += productTotalPrice;
+    });
+
+    tax = subtotal * 0.1; // 10% tax
+    totalPrice = subtotal + tax;
+
+    // Header Section
+    pdfDoc
+      .fontSize(28)
+      .font("Helvetica-Bold")
+      .fillColor("#2c3e50")
+      .text("INVOICE", { align: "center" });
+
+    pdfDoc.moveDown(0.5);
+
+    // Company Info
+    pdfDoc
+      .fontSize(12)
+      .font("Helvetica")
+      .fillColor("#34495e")
+      .text("Your E-Commerce Store", { align: "center" })
+      .fontSize(10)
+      .text("123 Commerce Street", { align: "center" })
+      .text("Business City, BC 12345", { align: "center" })
+      .text("Phone: (555) 123-4567", { align: "center" })
+      .text("Email: info@yourstore.com", { align: "center" });
+
+    pdfDoc.moveDown(1);
+
+    // Invoice Details
+    const invoiceDate = new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
+    pdfDoc.fontSize(10).font("Helvetica-Bold").fillColor("#2c3e50");
+
+    // Left column - Invoice info
+    pdfDoc.text("Invoice Number:", 50, 200);
+    pdfDoc.text("Invoice Date:", 50, 215);
+    pdfDoc.text("Order ID:", 50, 230);
+
+    pdfDoc.font("Helvetica");
+    pdfDoc.text(orderId, 150, 200);
+    pdfDoc.text(invoiceDate, 150, 215);
+    pdfDoc.text(orderId, 150, 230);
+
+    // Right column - Customer info
+    pdfDoc.font("Helvetica-Bold");
+    pdfDoc.text("Bill To:", 350, 200);
+    pdfDoc.font("Helvetica");
+    pdfDoc.rect(350, 215, 200, 30).strokeColor("#3498db").lineWidth(1).stroke();
+    const billToEmail =
+      (order.user.userId && order.user.userId.email) ||
+      order.user.email ||
+      (req.user && req.user.email) ||
+      "N/A";
+    pdfDoc.text(billToEmail, 360, 225, { width: 180, align: "left" });
+
+    pdfDoc.moveDown(2);
+
+    // Table Header
+    const tableTop = 280;
+    const itemCodeX = 50;
+    const descriptionX = 100;
+    const quantityX = 300;
+    const priceX = 350;
+    const totalX = 420;
+
+    pdfDoc
+      .fontSize(10)
+      .font("Helvetica-Bold")
+      .fillColor("#ffffff")
+      .rect(50, tableTop - 20, 500, 20)
+      .fill()
+      .fillColor("#2c3e50")
+      .text("Item", itemCodeX, tableTop - 15)
+      .text("Description", descriptionX, tableTop - 15)
+      .text("Qty", quantityX, tableTop - 15)
+      .text("Price", priceX, tableTop - 15)
+      .text("Total", totalX, tableTop - 15);
+
+    // Table Content
+    let currentY = tableTop + 10;
+
+    order.products.forEach((prod, index) => {
+      const productTotalPrice = prod.product.price * prod.quantity;
+
+      // Alternate row colors
+      if (index % 2 === 0) {
+        pdfDoc
+          .fillColor("#f8f9fa")
+          .rect(50, currentY - 5, 500, 20)
+          .fill();
+      }
+
       pdfDoc
-        .fontSize(16)
-        .text(
-          `${prod.product.title} - ${prod.quantity} x $${prod.product.price} = ${productTotalPrice}`
-        );
+        .fontSize(9)
+        .font("Helvetica")
+        .fillColor("#2c3e50")
+        .text((index + 1).toString(), itemCodeX, currentY)
+        .text(prod.product.title, descriptionX, currentY)
+        .text(prod.quantity.toString(), quantityX, currentY)
+        .text(`$${prod.product.price.toFixed(2)}`, priceX, currentY)
+        .text(`$${productTotalPrice.toFixed(2)}`, totalX, currentY);
+
+      currentY += 25;
     });
-    pdfDoc.text("----------------------------------", {
-      align: "center",
-    });
-    pdfDoc.fontSize(20).text(`Total = ${totalPrice}`, { align: "center" });
+
+    // Summary Section
+    const summaryY = currentY + 20;
+    const summaryLabels = ["Subtotal:", "Tax (10%):", "Total:"];
+    const summaryAmounts = [
+      `$${subtotal.toFixed(2)}`,
+      `$${tax.toFixed(2)}`,
+      `$${totalPrice.toFixed(2)}`,
+    ];
+    const numRows = summaryLabels.length;
+    const rowHeight = 20;
+    // Draw labels and amounts, left-aligned, no border
+    for (let i = 0; i < numRows; i++) {
+      pdfDoc.fontSize(10).font("Helvetica-Bold").fillColor("#2c3e50");
+      pdfDoc.text(summaryLabels[i], 50, summaryY + i * rowHeight, {
+        lineBreak: false,
+      });
+      pdfDoc.font("Helvetica");
+      pdfDoc.text(summaryAmounts[i], 150, summaryY + i * rowHeight, {
+        lineBreak: false,
+      });
+    }
+
+    // Add a decorative line
+    pdfDoc
+      .strokeColor("#bdc3c7")
+      .lineWidth(1)
+      .moveTo(50, pdfDoc.page.height - 100)
+      .lineTo(550, pdfDoc.page.height - 100)
+      .stroke();
+
+    // Footer - always at the bottom of the page
+    const centerWidth =
+      pdfDoc.page.width - pdfDoc.page.margins.left - pdfDoc.page.margins.right;
+    const footerHeight = 42; // 3 lines * 14px
+    const bottomY =
+      pdfDoc.page.height - pdfDoc.page.margins.bottom - footerHeight;
+    pdfDoc
+      .fontSize(10)
+      .font("Helvetica")
+      .fillColor("#7f8c8d")
+      .text("Thank you for your business!", pdfDoc.page.margins.left, bottomY, {
+        align: "center",
+        width: centerWidth,
+      })
+      .text(
+        "For questions about this invoice, please contact us at abdelrahman.mamdouh2200@gmail.com",
+        pdfDoc.page.margins.left,
+        bottomY + 14,
+        { align: "center", width: centerWidth }
+      )
+      .text(
+        "Payment is due within 30 days of invoice date.",
+        pdfDoc.page.margins.left,
+        bottomY + 28,
+        { align: "center", width: centerWidth }
+      );
+
     pdfDoc.end();
-    // const invoice = fs.readFileSync(invoicePath);
-    // res.setHeader("Content-Type", "application/pdf");
-    // res.setHeader(
-    //   "Content-Disposition",
-    //   'inline; filename = "' + invoiceName + '"'
-    // );
-    // res.send(invoice);
-    //----------------
-    // create a readable stream so the data will be read in chuncks
-    //instead of as a whole to not cause memory pressaure for large files
-    // const file = fs.createReadStream(invoicePath);
-    // res.setHeader("Content-Type", "application/pdf");
-    // res.setHeader(
-    //   "Content-Disposition",
-    //   'inline; filename = "' + invoiceName + '"'
-    // );
-    //send the chunks from the stream into response
-    // file.pipe(res);
   } catch (e) {
     errorCall(e, next);
   }
