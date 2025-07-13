@@ -14,9 +14,7 @@ const mongoConnection = async (callback) => {
     throw err;
   }
   //?this is the promise based approach
-  // MongoClient.connect(
-  //   "mongodb+srv://abdelrahman_mamdouh:AmdRyzen32200g@cluster0.henws.mongodb.net/node-course?retryWrites=true&w=majority&appName=Cluster0"
-  // )
+  // MongoClient.connect(MONGODB_URI)
   //   .then((client) => {
   //     console.log("connected");
   //     _db = client.db();
