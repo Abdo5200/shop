@@ -308,7 +308,6 @@ exports.getInvoice = async (req, res, next) => {
       .text("INVOICE", { align: "center" });
 
     pdfDoc.moveDown(0.5);
-
     // Company Info
     pdfDoc
       .fontSize(12)
@@ -319,16 +318,17 @@ exports.getInvoice = async (req, res, next) => {
       .text("123 Commerce Street", { align: "center" })
       .text("Business City, BC 12345", { align: "center" })
       .text("Phone: (555) 123-4567", { align: "center" })
-      .text("Email: info@yourstore.com", { align: "center" });
+      .text(`Email: ${process.env.MY_SENDING_EMAIL}`, { align: "center" });
 
     pdfDoc.moveDown(1);
 
     // Invoice Details
-    const invoiceDate = new Date().toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+    // const invoiceDate = new Date().toLocaleDateString("en-US", {
+    //   year: "numeric",
+    //   month: "long",
+    //   day: "numeric",
+    // });
+    const invoiceDate = order.createdAt.toLocaleDateString();
 
     pdfDoc.fontSize(10).font("Helvetica-Bold").fillColor("#2c3e50");
 
