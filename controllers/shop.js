@@ -271,6 +271,12 @@ exports.getInvoice = async (req, res, next) => {
     const invoiceName = "invoice-" + orderId + ".pdf";
     const invoicePath = path.join("data", "invoices", invoiceName);
 
+    // Ensure the invoices directory exists
+    const invoiceDir = path.join("data", "invoices");
+    if (!fs.existsSync(invoiceDir)) {
+      fs.mkdirSync(invoiceDir, { recursive: true });
+    }
+
     // Set response headers
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
