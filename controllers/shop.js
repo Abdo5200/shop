@@ -319,9 +319,9 @@ exports.getInvoice = async (req, res, next) => {
       .fontSize(12)
       .font("Helvetica")
       .fillColor("#34495e")
-      .text("Your E-Commerce Store", { align: "center" })
+      .text("E-Commerce Store", { align: "center" })
       .fontSize(10)
-      .text("123 Commerce Street", { align: "center" })
+      .text("123 Wall Street", { align: "center" })
       .text("Business City, BC 12345", { align: "center" })
       .text("Phone: (555) 123-4567", { align: "center" })
       .text(`Email: ${process.env.MY_SENDING_EMAIL}`, { align: "center" });
