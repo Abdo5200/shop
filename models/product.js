@@ -14,7 +14,7 @@ const productSchema = new Schema(
       type: String,
       required: true,
     },
-    imageUrl: {
+    imageKey: {
       type: String,
       required: true,
     },
@@ -26,6 +26,6 @@ const productSchema = new Schema(
   },
   {
     timestamps: true, // This automatically adds createdAt and updatedAt fields
-  }
+  },
 );
 module.exports = mongoose.model("Product", productSchema);

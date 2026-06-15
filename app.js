@@ -22,7 +22,7 @@ require("dotenv").config();
 
 const errorController = require("./controllers/error");
 
-const MONGODB_URI = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@cluster0.henws.mongodb.net/${process.env.MONGO_DEFAULT_DATABASE}?retryWrites=true&w=majority&appName=Cluster0`;
+const MONGODB_URI = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@cluster0.3geivs2.mongodb.net/${process.env.MONGO_DEFAULT_DATABASE}?retryWrites=true&w=majority&appName=Cluster0`;
 
 require("dotenv").config();
 const store = new MongoDBStore({
@@ -60,7 +60,7 @@ const authRoutes = require("./routes/auth");
 
 const accessLogStream = fs.createWriteStream(
   path.join(__dirname, "access.log"),
-  { flags: "a" }
+  { flags: "a" },
 );
 
 // const fileStorage = multer.diskStorage({
@@ -90,16 +90,17 @@ const fileFilter = (req, file, cb) => {
 };
 
 const s3 = new S3Client({
-  region: process.env.AWS_BUCKET_REGION,
+  region: "auto",
+  endpoint: process.env.R2_ENDPOINT,
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY,
-    secretAccessKey: process.env.AWS_SECRET_KEY,
+    accessKeyId: process.env.R2_ACCESS_KEY,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
   },
 });
 
 const storage = multerS3({
   s3,
-  bucket: process.env.AWS_BUCKET_NAME,
+  bucket: process.env.R2_BUCKET_NAME,
   contentType: multerS3.AUTO_CONTENT_TYPE,
   metadata: (req, file, cb) => {
     cb(null, { fieldName: file.fieldname });
@@ -116,11 +117,7 @@ app.use(
   helmet.contentSecurityPolicy({
     useDefaults: true,
     directives: {
-      "img-src": [
-        "'self'",
-        "data:",
-        "https://abdo5200-product-images.s3.eu-north-1.amazonaws.com",
-      ],
+      "img-src": ["'self'", "data:", process.env.R2_PUBLIC_URL],
       "script-src": [
         "'self'",
         "https://js.stripe.com",
@@ -138,7 +135,7 @@ app.use(
       ],
       "form-action": ["'self'", "https://checkout.stripe.com"],
     },
-  })
+  }),
 );
 
 app.use(compression());
@@ -162,7 +159,7 @@ app.use(
     resave: false,
     saveUninitialized: false,
     store: store,
-  })
+  }),
 );
 
 app.use(csrfProtection);

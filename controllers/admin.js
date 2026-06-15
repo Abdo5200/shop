@@ -3,7 +3,8 @@ const Product = require("../models/product");
 const mongoose = require("mongoose");
 const fileHelper = require("../util/file");
 const { validationResult } = require("express-validator");
-
+const s3 = require("../util/R2.js");
+const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const ITEMS_PER_PAGE = 2;
 let errorCall = (err, next) => {
   const error = new Error(err);
@@ -74,7 +75,7 @@ exports.postAddProduct = async (req, res, next) => {
         validationErrors: [],
       });
     }
-    const imageUrl = image.location;
+    const imageKey = image.key;
     //create a new product object from Product Schema
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -94,7 +95,7 @@ exports.postAddProduct = async (req, res, next) => {
     }
     const product = new Product({
       title: title,
-      imageUrl: imageUrl,
+      imageKey: imageKey,
       price: price,
       description: description,
       userId: req.user,
@@ -157,7 +158,7 @@ exports.postEditProduct = async (req, res, next) => {
       userId: req.user._id,
     });
     if (!product) {
-      return res.redirect("/");
+      return errorCall(new Error("Product does not exist"), next);
     }
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -181,10 +182,16 @@ exports.postEditProduct = async (req, res, next) => {
     product.price = updatedPrice;
     product.description = updatedDescription;
     if (updatedImage) {
-      await fileHelper.deleteFile(product.imageUrl);
-      product.imageUrl = updatedImage.location;
+      await s3.send(
+        new DeleteObjectCommand({
+          Bucket: process.env.R2_BUCKET_NAME,
+          Key: product.imageKey,
+        }),
+      );
+
+      product.imageKey = updatedImage.key;
     }
-    product.save();
+    await product.save();
     res.redirect("/admin/products");
   } catch (err) {
     errorCall(err, next);
@@ -198,20 +205,34 @@ exports.postEditProduct = async (req, res, next) => {
 
 exports.deleteProduct = async (req, res, next) => {
   const prodId = req.params.productId;
+
   try {
     const product = await Product.findById(prodId);
-    if (!product) errorCall(new Error("Product does not exist"), next);
-    await fileHelper.deleteFile(product.imageUrl);
+
+    if (!product) {
+      return errorCall(new Error("Product does not exist"), next);
+    }
+
+    if (product.imageKey) {
+      await s3.send(
+        new DeleteObjectCommand({
+          Bucket: process.env.R2_BUCKET_NAME,
+          Key: product.imageKey,
+        }),
+      );
+    }
+
     await Product.deleteOne({
       _id: prodId,
       userId: req.user._id,
     });
+
     res.status(200).json({ message: "success" });
   } catch (err) {
+    console.log(err);
     res.status(500).json({ message: "deleting product failed" });
   }
 };
-
 /**
  * @param {import('express').Request} req
  * @param {import('express').Response} res
@@ -225,7 +246,7 @@ exports.getProducts = async (req, res, next) => {
       "admin/products",
       "/admin/products",
       "Admin Products",
-      req.user._id
+      req.user._id,
     );
   } catch (err) {
     errorCall(err, next);
